@@ -159,37 +159,38 @@ def get_verdict(
             "tip": "",
         }
 
-    client = Groq(api_key=GROQ_API_KEY)
-    prompt = f"""You are a data-driven game analyst. Given this data about a Steam game, give a verdict.
-
-Game: {name}
-Current Price: {price}
+    import json, re
+    try:
+        client = Groq(api_key=GROQ_API_KEY)
+        prompt = (
+            f"You are a data-driven game analyst. Give a verdict on this Steam game.
+"
+            f"Game: {name}
+Price: {price}
 Discount: {discount}%
-Sentiment Score: {score}/100
-Positive Reviews: {positive_pct}%
-Negative Reviews: {negative_pct}%
-Total Recommendations: {recommendations:,}
+"
+            f"Sentiment: {score}/100
+Positive: {positive_pct}%
+Negative: {negative_pct}%
+"
+            f"Recommendations: {recommendations}
 Metacritic: {metacritic}
 Genres: {genres}
-
-Respond ONLY as valid JSON with exactly these fields:
-{{
-  "label": "BUY NOW" or "WAIT FOR SALE" or "SKIP",
-  "reason": "One clear sentence explaining why based on the data.",
-  "tip": "One actionable tip for the player (e.g. best time to buy, what type of gamer will love this)."
-}}"""
-
-    msg = client.chat.completions.create(
-        model="llama-3.3-70b-versatile",
-        max_tokens=300,
-        messages=[{"role": "user", "content": prompt}],
-    )
-    import json, re
-    raw_text = msg.choices[0].message.content
-    match = re.search(r"\{.*\}", raw_text, re.DOTALL)
-    if match:
-        return json.loads(match.group())
-    return {"label": "UNKNOWN", "reason": raw_text, "tip": ""}
+"
+            f"Respond ONLY with valid JSON: {{"label": "BUY NOW" or "WAIT FOR SALE" or "SKIP", "reason": "one sentence", "tip": "one tip"}}"
+        )
+        msg = client.chat.completions.create(
+            model="llama3-70b-8192",
+            max_tokens=300,
+            messages=[{"role": "user", "content": prompt}],
+        )
+        raw_text = msg.choices[0].message.content
+        match = re.search(r"\{.*?\}", raw_text, re.DOTALL)
+        if match:
+            return json.loads(match.group())
+        return {"label": "UNKNOWN", "reason": raw_text, "tip": ""}
+    except Exception as e:
+        raise HTTPException(500, f"Groq error: {str(e)}")
 
 
 # ── 5. Health ──────────────────────────────────────────────────────────────
