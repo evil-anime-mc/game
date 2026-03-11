@@ -8,7 +8,6 @@ import requests
 from fastapi import FastAPI, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
 from vaderSentiment.vaderSentiment import SentimentIntensityAnalyzer
-from groq import Groq
 
 app = FastAPI(title="GameChecker API")
 
@@ -159,8 +158,6 @@ def get_verdict(
         return {"label": "UNKNOWN", "reason": "GROQ_API_KEY not set.", "tip": ""}
 
     try:
-        client = Groq(api_key=GROQ_API_KEY)
-
         prompt = (
             "You are a game analyst. Based on this Steam data, give a verdict.\n"
             "Game: " + name + "\n"
@@ -168,18 +165,26 @@ def get_verdict(
             "Sentiment: " + str(score) + "/100 | Positive: " + str(positive_pct) + "% | Negative: " + str(negative_pct) + "%\n"
             "Recommendations: " + str(recommendations) + " | Metacritic: " + str(metacritic) + "\n"
             "Genres: " + genres + "\n\n"
-            "Reply ONLY with this JSON and nothing else:\n"
-            "{\"label\": \"BUY NOW\", \"reason\": \"your reason here\", \"tip\": \"your tip here\"}\n"
-            "label must be exactly one of: BUY NOW, WAIT FOR SALE, SKIP"
+            "Reply ONLY with this JSON:\n"
+            "{\"label\": \"BUY NOW\", \"reason\": \"one sentence reason\", \"tip\": \"one tip\"}\n"
+            "label must be exactly: BUY NOW or WAIT FOR SALE or SKIP"
         )
 
-        msg = client.chat.completions.create(
-            model="llama3-70b-8192",
-            max_tokens=200,
-            messages=[{"role": "user", "content": prompt}],
+        response = requests.post(
+            "https://api.groq.com/openai/v1/chat/completions",
+            headers={
+                "Authorization": "Bearer " + GROQ_API_KEY,
+                "Content-Type": "application/json",
+            },
+            json={
+                "model": "llama3-70b-8192",
+                "max_tokens": 200,
+                "messages": [{"role": "user", "content": prompt}],
+            },
+            timeout=15,
         )
 
-        raw_text = msg.choices[0].message.content
+        raw_text = response.json()["choices"][0]["message"]["content"]
         match = re.search(r"\{[^{}]+\}", raw_text, re.DOTALL)
         if match:
             return json.loads(match.group())
@@ -187,3 +192,4 @@ def get_verdict(
 
     except Exception as e:
         raise HTTPException(500, "Groq error: " + str(e))
+        
