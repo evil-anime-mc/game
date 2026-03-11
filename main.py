@@ -1,3 +1,4 @@
+
 from fastapi import FastAPI, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
 import requests
@@ -162,23 +163,16 @@ def get_verdict(
     import json, re
     try:
         client = Groq(api_key=GROQ_API_KEY)
-        prompt = (
-            f"You are a data-driven game analyst. Give a verdict on this Steam game.
-"
-            f"Game: {name}
-Price: {price}
-Discount: {discount}%
-"
-            f"Sentiment: {score}/100
-Positive: {positive_pct}%
-Negative: {negative_pct}%
-"
-            f"Recommendations: {recommendations}
-Metacritic: {metacritic}
-Genres: {genres}
-"
-            f"Respond ONLY with valid JSON: {{"label": "BUY NOW" or "WAIT FOR SALE" or "SKIP", "reason": "one sentence", "tip": "one tip"}}"
-        )
+        lines = [
+            "You are a data-driven game analyst. Give a buy/skip verdict on this Steam game.",
+            f"Game: {name}",
+            f"Price: {price}  Discount: {discount}%",
+            f"Sentiment Score: {score}/100  Positive: {positive_pct}%  Negative: {negative_pct}%",
+            f"Total Recommendations: {recommendations}",
+            f"Metacritic: {metacritic}  Genres: {genres}",
+            "Respond ONLY with valid JSON with keys: label (BUY NOW or WAIT FOR SALE or SKIP), reason (one sentence), tip (one tip).",
+        ]
+        prompt = "\n".join(lines)
         msg = client.chat.completions.create(
             model="llama3-70b-8192",
             max_tokens=300,
@@ -191,7 +185,6 @@ Genres: {genres}
         return {"label": "UNKNOWN", "reason": raw_text, "tip": ""}
     except Exception as e:
         raise HTTPException(500, f"Groq error: {str(e)}")
-
 
 # ── 5. Health ──────────────────────────────────────────────────────────────
 @app.get("/")
