@@ -1,12 +1,14 @@
-
-from fastapi import FastAPI, HTTPException, Query
-from fastapi.middleware.cors import CORSMiddleware
-import requests
-from groq import Groq
-from vaderSentiment.vaderSentiment import SentimentIntensityAnalyzer
+import os
+import re
+import json
 from collections import defaultdict
 from datetime import datetime
-import os
+
+import requests
+from fastapi import FastAPI, HTTPException, Query
+from fastapi.middleware.cors import CORSMiddleware
+from vaderSentiment.vaderSentiment import SentimentIntensityAnalyzer
+from groq import Groq
 
 app = FastAPI(title="GameChecker API")
 
@@ -21,11 +23,15 @@ analyzer = SentimentIntensityAnalyzer()
 GROQ_API_KEY = os.getenv("GROQ_API_KEY", "")
 
 
-# ── 1. Search ──────────────────────────────────────────────────────────────
+@app.get("/")
+def health():
+    return {"status": "ok", "service": "GameChecker API"}
+
+
 @app.get("/search")
 def search_games(game: str = Query(..., min_length=1)):
-    url = f"https://store.steampowered.com/api/storesearch/?term={game}&l=en&cc=US"
-    r = requests.get(url, timeout=10)
+    url = "https://store.steampowered.com/api/storesearch/"
+    r = requests.get(url, params={"term": game, "l": "en", "cc": "US"}, timeout=10)
     if r.status_code != 200:
         raise HTTPException(502, "Steam search failed")
     items = r.json().get("items", [])[:6]
@@ -34,7 +40,7 @@ def search_games(game: str = Query(..., min_length=1)):
         price_info = item.get("price", {})
         if isinstance(price_info, dict):
             final = price_info.get("final", 0)
-            price_str = f"${final/100:.2f}" if final else "Free"
+            price_str = "${:.2f}".format(final / 100) if final else "Free"
         else:
             price_str = "N/A"
         results.append({
@@ -46,11 +52,10 @@ def search_games(game: str = Query(..., min_length=1)):
     return results
 
 
-# ── 2. Game details ────────────────────────────────────────────────────────
 @app.get("/game")
 def game_details(appid: int):
-    url = f"https://store.steampowered.com/api/appdetails?appids={appid}&cc=us&l=en"
-    r = requests.get(url, timeout=10)
+    url = "https://store.steampowered.com/api/appdetails"
+    r = requests.get(url, params={"appids": appid, "cc": "us", "l": "en"}, timeout=10)
     data = r.json().get(str(appid), {})
     if not data.get("success"):
         raise HTTPException(404, "Game not found")
@@ -71,17 +76,16 @@ def game_details(appid: int):
     }
 
 
-# ── 3. Reviews + sentiment ─────────────────────────────────────────────────
 @app.get("/reviews")
 def game_reviews(appid: int):
-    url = (
-        f"https://store.steampowered.com/appreviews/{appid}"
-        f"?json=1&filter=recent&language=english&num_per_page=100&purchase_type=all"
-    )
-    r = requests.get(url, timeout=15)
+    url = "https://store.steampowered.com/appreviews/{}".format(appid)
+    r = requests.get(url, params={
+        "json": 1, "filter": "recent", "language": "english",
+        "num_per_page": 100, "purchase_type": "all"
+    }, timeout=15)
     raw = r.json()
-
     reviews_data = raw.get("reviews", [])
+
     if not reviews_data:
         return {
             "total": 0, "score": 50,
@@ -139,7 +143,6 @@ def game_reviews(appid: int):
     }
 
 
-# ── 4. Claude verdict ──────────────────────────────────────────────────────
 @app.get("/verdict")
 def get_verdict(
     name: str,
@@ -153,40 +156,34 @@ def get_verdict(
     genres: str = "",
 ):
     if not GROQ_API_KEY:
-        return {
-            "verdict": "No API Key",
-            "label": "UNKNOWN",
-            "reason": "Set GROQ_API_KEY env var to enable AI verdicts.",
-            "tip": "",
-        }
+        return {"label": "UNKNOWN", "reason": "GROQ_API_KEY not set.", "tip": ""}
 
-    import json, re
     try:
         client = Groq(api_key=GROQ_API_KEY)
-        lines = [
-            "You are a data-driven game analyst. Give a buy/skip verdict on this Steam game.",
-            f"Game: {name}",
-            f"Price: {price}  Discount: {discount}%",
-            f"Sentiment Score: {score}/100  Positive: {positive_pct}%  Negative: {negative_pct}%",
-            f"Total Recommendations: {recommendations}",
-            f"Metacritic: {metacritic}  Genres: {genres}",
-            "Respond ONLY with valid JSON with keys: label (BUY NOW or WAIT FOR SALE or SKIP), reason (one sentence), tip (one tip).",
-        ]
-        prompt = "\n".join(lines)
+
+        prompt = (
+            "You are a game analyst. Based on this Steam data, give a verdict.\n"
+            "Game: " + name + "\n"
+            "Price: " + price + " | Discount: " + str(discount) + "%\n"
+            "Sentiment: " + str(score) + "/100 | Positive: " + str(positive_pct) + "% | Negative: " + str(negative_pct) + "%\n"
+            "Recommendations: " + str(recommendations) + " | Metacritic: " + str(metacritic) + "\n"
+            "Genres: " + genres + "\n\n"
+            "Reply ONLY with this JSON and nothing else:\n"
+            "{\"label\": \"BUY NOW\", \"reason\": \"your reason here\", \"tip\": \"your tip here\"}\n"
+            "label must be exactly one of: BUY NOW, WAIT FOR SALE, SKIP"
+        )
+
         msg = client.chat.completions.create(
             model="llama3-70b-8192",
-            max_tokens=300,
+            max_tokens=200,
             messages=[{"role": "user", "content": prompt}],
         )
+
         raw_text = msg.choices[0].message.content
-        match = re.search(r"\{.*?\}", raw_text, re.DOTALL)
+        match = re.search(r"\{[^{}]+\}", raw_text, re.DOTALL)
         if match:
             return json.loads(match.group())
         return {"label": "UNKNOWN", "reason": raw_text, "tip": ""}
-    except Exception as e:
-        raise HTTPException(500, f"Groq error: {str(e)}")
 
-# ── 5. Health ──────────────────────────────────────────────────────────────
-@app.get("/")
-def health():
-    return {"status": "ok", "service": "GameChecker API"}
+    except Exception as e:
+        raise HTTPException(500, "Groq error: " + str(e))
