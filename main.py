@@ -184,7 +184,10 @@ def get_verdict(
             timeout=15,
         )
 
-        raw_text = response.json()["choices"][0]["message"]["content"]
+        resp_json = response.json()
+        if "choices" not in resp_json:
+            raise HTTPException(500, "Groq response: " + str(resp_json))
+        raw_text = resp_json["choices"][0]["message"]["content"]
         match = re.search(r"\{[^{}]+\}", raw_text, re.DOTALL)
         if match:
             return json.loads(match.group())
@@ -192,4 +195,3 @@ def get_verdict(
 
     except Exception as e:
         raise HTTPException(500, "Groq error: " + str(e))
-        
