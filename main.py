@@ -195,3 +195,56 @@ def get_verdict(
 
     except Exception as e:
         raise HTTPException(500, "Groq error: " + str(e))
+
+
+@app.get("/trending")
+def trending_games():
+    try:
+        # Get top sellers from Steam
+        r = requests.get(
+            "https://store.steampowered.com/api/featuredcategories/",
+            params={"cc": "us", "l": "en"},
+            timeout=10,
+        )
+        data = r.json()
+        top_sellers = data.get("top_sellers", {}).get("items", [])[:8]
+
+        results = []
+        for game in top_sellers:
+            appid = game.get("id")
+            name = game.get("name", "")
+            header = game.get("large_capsule_image", game.get("header_image", ""))
+            price_info = game.get("final_price", 0)
+            price = "${:.2f}".format(price_info / 100) if price_info else "Free"
+            discount = game.get("discount_percent", 0)
+
+            # Quick sentiment from 20 reviews
+            try:
+                rev_r = requests.get(
+                    "https://store.steampowered.com/appreviews/{}".format(appid),
+                    params={"json": 1, "filter": "recent", "language": "english", "num_per_page": 20},
+                    timeout=8,
+                )
+                reviews = rev_r.json().get("reviews", [])
+                scores = []
+                for rev in reviews:
+                    text = rev.get("review", "").strip()
+                    if text:
+                        compound = analyzer.polarity_scores(text)["compound"]
+                        scores.append(compound)
+                sentiment = round((sum(scores) / len(scores) + 1) * 50) if scores else 50
+            except Exception:
+                sentiment = 50
+
+            results.append({
+                "appid": appid,
+                "name": name,
+                "header_image": header,
+                "price": price,
+                "discount": discount,
+                "sentiment": sentiment,
+            })
+
+        return results
+    except Exception as e:
+        raise HTTPException(500, "Trending error: " + str(e))
