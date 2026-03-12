@@ -5,476 +5,229 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 <title>GameCheck — Should I Buy This?</title>
 <link rel="preconnect" href="https://fonts.googleapis.com"/>
-<link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;500;600;700&family=DM+Mono:wght@300;400;500&family=Bebas+Neue&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Rajdhani:wght@400;500;600;700&family=DM+Mono:wght@300;400;500&display=swap" rel="stylesheet"/>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
 <style>
-  /* ── Reset & Base ───────────────────────────────────────────── */
-  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#080b10;--bg2:#0d1117;--bg3:#111823;
+  --border:rgba(255,255,255,0.07);
+  --accent:#00e5ff;--accent2:#ff3d71;--accent3:#a8ff3e;
+  --text:#e2e8f0;--muted:#64748b;
+  --font-hd:'Bebas Neue',sans-serif;
+  --font-ui:'Rajdhani',sans-serif;
+  --font-mono:'DM Mono',monospace;
+}
+html{scroll-behavior:smooth}
+body{background:var(--bg);color:var(--text);font-family:var(--font-ui);font-size:16px;min-height:100vh;overflow-x:hidden}
+body::before{content:'';position:fixed;inset:0;background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,0,0,0.03) 2px,rgba(0,0,0,0.03) 4px);pointer-events:none;z-index:0}
+.wrap{position:relative;z-index:1;max-width:1100px;margin:0 auto;padding:0 24px}
 
-  :root {
-    --bg:       #080b10;
-    --bg2:      #0d1117;
-    --bg3:      #111823;
-    --border:   rgba(255,255,255,0.07);
-    --accent:   #00e5ff;
-    --accent2:  #ff3d71;
-    --accent3:  #a8ff3e;
-    --text:     #e2e8f0;
-    --muted:    #64748b;
-    --glow:     0 0 20px rgba(0,229,255,0.2);
-    --font-hd:  'Bebas Neue', sans-serif;
-    --font-ui:  'Rajdhani', sans-serif;
-    --font-mono:'DM Mono', monospace;
-  }
+/* Header */
+header{padding:32px 0 24px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px}
+.logo-row{display:flex;align-items:center;gap:14px}
+.logo-mark{width:40px;height:40px;background:var(--accent);clip-path:polygon(50% 0%,100% 25%,100% 75%,50% 100%,0% 75%,0% 25%);display:flex;align-items:center;justify-content:center;font-size:18px;animation:pulse-glow 3s ease-in-out infinite}
+@keyframes pulse-glow{0%,100%{filter:drop-shadow(0 0 6px var(--accent))}50%{filter:drop-shadow(0 0 18px var(--accent))}}
+.logo-text{font-family:var(--font-hd);font-size:2rem;letter-spacing:3px;color:var(--accent)}
+.logo-sub{font-family:var(--font-mono);font-size:0.7rem;color:var(--muted);letter-spacing:2px}
+.nav-tabs{display:flex;gap:4px}
+.nav-tab{background:none;border:1px solid var(--border);color:var(--muted);font-family:var(--font-ui);font-size:0.85rem;font-weight:600;letter-spacing:1px;padding:8px 18px;cursor:pointer;transition:all 0.2s}
+.nav-tab:hover,.nav-tab.active{background:var(--accent);color:#000;border-color:var(--accent)}
 
-  html { scroll-behavior: smooth; }
+/* Pages */
+.page{display:none}.page.active{display:block}
 
-  body {
-    background: var(--bg);
-    color: var(--text);
-    font-family: var(--font-ui);
-    font-size: 16px;
-    min-height: 100vh;
-    overflow-x: hidden;
-  }
+/* Hero */
+.hero{padding:80px 0 60px;text-align:center;position:relative}
+.hero-bg{position:absolute;inset:0;background:radial-gradient(ellipse 70% 50% at 50% 50%,rgba(0,229,255,0.06) 0%,transparent 70%);pointer-events:none}
+.hero h1{font-family:var(--font-hd);font-size:clamp(3rem,8vw,6.5rem);letter-spacing:4px;line-height:1;color:#fff;margin-bottom:16px}
+.hero h1 span{color:var(--accent)}
+.hero p{color:var(--muted);font-family:var(--font-mono);font-size:0.85rem;letter-spacing:1.5px;margin-bottom:48px}
 
-  /* ── Noise texture overlay ──────────────────────────────────── */
-  body::before {
-    content: '';
-    position: fixed; inset: 0;
-    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.035'/%3E%3C/svg%3E");
-    pointer-events: none;
-    z-index: 0;
-    opacity: 0.4;
-  }
+/* Search */
+.search-wrap{position:relative;max-width:600px;margin:0 auto}
+.search-bar{width:100%;background:var(--bg3);border:1px solid var(--accent);border-radius:2px;padding:16px 60px 16px 24px;font-family:var(--font-ui);font-size:1.1rem;font-weight:600;color:var(--text);letter-spacing:1px;outline:none;box-shadow:0 0 20px rgba(0,229,255,0.2);transition:box-shadow 0.2s}
+.search-bar::placeholder{color:var(--muted);font-weight:400}
+.search-bar:focus{box-shadow:0 0 30px rgba(0,229,255,0.3)}
+.search-btn{position:absolute;right:0;top:0;bottom:0;width:56px;background:var(--accent);border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:background 0.2s}
+.search-btn:hover{background:#00cfea}
+#search-results{max-width:600px;margin:8px auto 0;background:var(--bg2);border:1px solid var(--border);border-top:none;display:none}
+.result-item{display:flex;align-items:center;gap:12px;padding:12px 16px;cursor:pointer;border-bottom:1px solid var(--border);transition:background 0.15s}
+.result-item:last-child{border-bottom:none}
+.result-item:hover{background:var(--bg3)}
+.result-item img{width:48px;height:36px;object-fit:cover;border-radius:1px}
+.result-name{flex:1;font-weight:600;font-size:0.95rem}
+.result-price{font-family:var(--font-mono);font-size:0.8rem;color:var(--accent3)}
 
-  /* ── Scanline effect ────────────────────────────────────────── */
-  body::after {
-    content: '';
-    position: fixed; inset: 0;
-    background: repeating-linear-gradient(
-      0deg,
-      transparent,
-      transparent 2px,
-      rgba(0,0,0,0.03) 2px,
-      rgba(0,0,0,0.03) 4px
-    );
-    pointer-events: none;
-    z-index: 0;
-  }
+/* Loading */
+.loading{display:none;flex-direction:column;align-items:center;gap:16px;padding:80px 0}
+.loading.active{display:flex}
+.loading-ring{width:60px;height:60px;border:2px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin 0.8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.loading-text{font-family:var(--font-mono);font-size:0.8rem;color:var(--muted);letter-spacing:2px}
 
-  /* ── Layout ─────────────────────────────────────────────────── */
-  .wrap { position: relative; z-index: 1; max-width: 1100px; margin: 0 auto; padding: 0 24px; }
+/* Analysis */
+#analysis{display:none;padding:48px 0 80px}
+#analysis.active{display:block;animation:fadeUp 0.5s ease}
+@keyframes fadeUp{from{opacity:0;transform:translateY(24px)}to{opacity:1;transform:translateY(0)}}
 
-  /* ── Header ─────────────────────────────────────────────────── */
-  header {
-    padding: 36px 0 24px;
-    border-bottom: 1px solid var(--border);
-    display: flex;
-    align-items: center;
-    gap: 16px;
-  }
-  .logo-mark {
-    width: 40px; height: 40px;
-    background: var(--accent);
-    clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
-    display: flex; align-items: center; justify-content: center;
-    font-size: 18px;
-    animation: pulse-glow 3s ease-in-out infinite;
-  }
-  @keyframes pulse-glow {
-    0%,100% { filter: drop-shadow(0 0 6px var(--accent)); }
-    50%      { filter: drop-shadow(0 0 18px var(--accent)); }
-  }
-  .logo-text {
-    font-family: var(--font-hd);
-    font-size: 2rem;
-    letter-spacing: 3px;
-    color: var(--accent);
-  }
-  .logo-sub { font-family: var(--font-mono); font-size: 0.7rem; color: var(--muted); letter-spacing: 2px; }
+/* Game banner */
+.game-banner{position:relative;height:260px;border-radius:2px;overflow:hidden;margin-bottom:32px;border:1px solid var(--border)}
+.game-banner img{width:100%;height:100%;object-fit:cover;filter:brightness(0.5)}
+.game-banner-content{position:absolute;inset:0;display:flex;flex-direction:column;justify-content:flex-end;padding:28px;background:linear-gradient(0deg,rgba(8,11,16,0.9) 0%,transparent 60%)}
+.game-title{font-family:var(--font-hd);font-size:clamp(2rem,5vw,3.5rem);letter-spacing:2px;color:#fff;line-height:1;margin-bottom:8px}
+.game-meta{display:flex;gap:16px;flex-wrap:wrap;align-items:center}
+.tag{font-family:var(--font-mono);font-size:0.72rem;letter-spacing:1.5px;color:var(--muted);background:rgba(255,255,255,0.06);padding:4px 10px;border:1px solid var(--border)}
+.tag.price{color:var(--accent3);border-color:rgba(168,255,62,0.3)}
+.tag.sale{color:var(--accent2);border-color:rgba(255,61,113,0.3)}
+.share-btn{margin-left:auto;background:none;border:1px solid var(--accent);color:var(--accent);font-family:var(--font-ui);font-size:0.8rem;font-weight:600;letter-spacing:1.5px;padding:6px 14px;cursor:pointer;transition:all 0.2s}
+.share-btn:hover{background:var(--accent);color:#000}
 
-  /* ── Hero ───────────────────────────────────────────────────── */
-  .hero {
-    padding: 80px 0 60px;
-    text-align: center;
-    position: relative;
-  }
-  .hero-bg {
-    position: absolute; inset: 0;
-    background: radial-gradient(ellipse 70% 50% at 50% 50%, rgba(0,229,255,0.06) 0%, transparent 70%);
-    pointer-events: none;
-  }
-  .hero h1 {
-    font-family: var(--font-hd);
-    font-size: clamp(3rem, 8vw, 6.5rem);
-    letter-spacing: 4px;
-    line-height: 1;
-    color: #fff;
-    margin-bottom: 16px;
-  }
-  .hero h1 span { color: var(--accent); }
-  .hero p {
-    color: var(--muted);
-    font-family: var(--font-mono);
-    font-size: 0.85rem;
-    letter-spacing: 1.5px;
-    margin-bottom: 48px;
-  }
+/* Grid */
+.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-bottom:20px}
+.grid-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:20px;margin-bottom:20px}
+@media(max-width:700px){.grid-2,.grid-3{grid-template-columns:1fr}}
 
-  /* ── Search bar ─────────────────────────────────────────────── */
-  .search-wrap {
-    position: relative;
-    max-width: 600px;
-    margin: 0 auto;
-  }
-  .search-bar {
-    width: 100%;
-    background: var(--bg3);
-    border: 1px solid var(--accent);
-    border-radius: 2px;
-    padding: 16px 60px 16px 24px;
-    font-family: var(--font-ui);
-    font-size: 1.1rem;
-    font-weight: 600;
-    color: var(--text);
-    letter-spacing: 1px;
-    outline: none;
-    box-shadow: var(--glow), inset 0 1px 0 rgba(255,255,255,0.04);
-    transition: border-color 0.2s, box-shadow 0.2s;
-  }
-  .search-bar::placeholder { color: var(--muted); font-weight: 400; }
-  .search-bar:focus {
-    border-color: var(--accent);
-    box-shadow: 0 0 30px rgba(0,229,255,0.3), inset 0 1px 0 rgba(255,255,255,0.06);
-  }
-  .search-btn {
-    position: absolute; right: 0; top: 0; bottom: 0;
-    width: 56px;
-    background: var(--accent);
-    border: none; cursor: pointer;
-    display: flex; align-items: center; justify-content: center;
-    transition: background 0.2s;
-  }
-  .search-btn:hover { background: #00cfea; }
-  .search-btn svg { color: #000; }
+/* Panel */
+.panel{background:var(--bg2);border:1px solid var(--border);padding:24px;position:relative;overflow:hidden}
+.panel::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,var(--accent),transparent)}
+.panel-label{font-family:var(--font-mono);font-size:0.68rem;letter-spacing:2.5px;color:var(--muted);text-transform:uppercase;margin-bottom:16px}
 
-  /* ── Search results ─────────────────────────────────────────── */
-  #search-results {
-    max-width: 600px;
-    margin: 8px auto 0;
-    background: var(--bg2);
-    border: 1px solid var(--border);
-    border-top: none;
-    display: none;
-  }
-  .result-item {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    padding: 12px 16px;
-    cursor: pointer;
-    border-bottom: 1px solid var(--border);
-    transition: background 0.15s;
-  }
-  .result-item:last-child { border-bottom: none; }
-  .result-item:hover { background: var(--bg3); }
-  .result-item img { width: 48px; height: 36px; object-fit: cover; border-radius: 1px; }
-  .result-name { flex: 1; font-weight: 600; font-size: 0.95rem; }
-  .result-price { font-family: var(--font-mono); font-size: 0.8rem; color: var(--accent3); }
+/* Verdict */
+.verdict-card{padding:32px;border:1px solid var(--border);position:relative;overflow:hidden;margin-bottom:20px}
+.verdict-card.buy{border-color:rgba(168,255,62,0.4);background:rgba(168,255,62,0.04)}
+.verdict-card.wait{border-color:rgba(0,229,255,0.4);background:rgba(0,229,255,0.04)}
+.verdict-card.skip{border-color:rgba(255,61,113,0.4);background:rgba(255,61,113,0.04)}
+.verdict-label{font-family:var(--font-hd);font-size:4rem;letter-spacing:6px;line-height:1;margin-bottom:8px}
+.verdict-card.buy .verdict-label{color:var(--accent3)}
+.verdict-card.wait .verdict-label{color:var(--accent)}
+.verdict-card.skip .verdict-label{color:var(--accent2)}
+.verdict-reason{color:var(--text);font-size:1.05rem;font-weight:500;line-height:1.5;margin-bottom:12px}
+.verdict-tip{font-family:var(--font-mono);font-size:0.8rem;color:var(--muted);border-left:2px solid var(--accent);padding-left:12px}
+.verdict-loading{font-family:var(--font-mono);font-size:0.8rem;color:var(--muted);letter-spacing:2px;animation:blink 1s ease infinite}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:0.3}}
 
-  /* ── Loading state ──────────────────────────────────────────── */
-  .loading {
-    display: none;
-    flex-direction: column;
-    align-items: center;
-    gap: 16px;
-    padding: 80px 0;
-  }
-  .loading.active { display: flex; }
-  .loading-ring {
-    width: 60px; height: 60px;
-    border: 2px solid var(--border);
-    border-top-color: var(--accent);
-    border-radius: 50%;
-    animation: spin 0.8s linear infinite;
-  }
-  @keyframes spin { to { transform: rotate(360deg); } }
-  .loading-text { font-family: var(--font-mono); font-size: 0.8rem; color: var(--muted); letter-spacing: 2px; }
+/* Gauge */
+.gauge-wrap{display:flex;flex-direction:column;align-items:center;gap:8px}
+.gauge-number{font-family:var(--font-hd);font-size:2.2rem;text-anchor:middle;dominant-baseline:middle}
+.gauge-label{font-family:var(--font-mono);font-size:0.65rem;letter-spacing:2px;color:var(--muted);text-align:center}
 
-  /* ── Analysis panel ─────────────────────────────────────────── */
-  #analysis { display: none; padding: 48px 0 80px; }
-  #analysis.active { display: block; animation: fadeUp 0.5s ease; }
-  @keyframes fadeUp { from { opacity: 0; transform: translateY(24px); } to { opacity: 1; transform: translateY(0); } }
+/* Bars */
+.bar-stat{margin-bottom:14px}
+.bar-stat-head{display:flex;justify-content:space-between;margin-bottom:6px}
+.bar-stat-name{font-weight:600;font-size:0.85rem}
+.bar-stat-val{font-family:var(--font-mono);font-size:0.8rem;color:var(--muted)}
+.bar-track{height:4px;background:var(--border);border-radius:2px;overflow:hidden}
+.bar-fill{height:100%;border-radius:2px;transition:width 1s cubic-bezier(.4,0,.2,1);width:0}
+.bar-fill.positive{background:var(--accent3)}
+.bar-fill.negative{background:var(--accent2)}
+.bar-fill.neutral{background:var(--muted)}
 
-  /* ── Game hero banner ───────────────────────────────────────── */
-  .game-banner {
-    position: relative;
-    height: 260px;
-    border-radius: 2px;
-    overflow: hidden;
-    margin-bottom: 32px;
-    border: 1px solid var(--border);
-  }
-  .game-banner img {
-    width: 100%; height: 100%;
-    object-fit: cover;
-    filter: brightness(0.5);
-  }
-  .game-banner-content {
-    position: absolute; inset: 0;
-    display: flex;
-    flex-direction: column;
-    justify-content: flex-end;
-    padding: 28px;
-    background: linear-gradient(0deg, rgba(8,11,16,0.9) 0%, transparent 60%);
-  }
-  .game-title {
-    font-family: var(--font-hd);
-    font-size: clamp(2rem, 5vw, 3.5rem);
-    letter-spacing: 2px;
-    color: #fff;
-    line-height: 1;
-    margin-bottom: 8px;
-  }
-  .game-meta {
-    display: flex;
-    gap: 16px;
-    flex-wrap: wrap;
-  }
-  .tag {
-    font-family: var(--font-mono);
-    font-size: 0.72rem;
-    letter-spacing: 1.5px;
-    color: var(--muted);
-    background: rgba(255,255,255,0.06);
-    padding: 4px 10px;
-    border: 1px solid var(--border);
-  }
-  .tag.price { color: var(--accent3); border-color: rgba(168,255,62,0.3); }
-  .tag.sale { color: var(--accent2); border-color: rgba(255,61,113,0.3); }
+/* Reviews */
+.review{padding:12px;border:1px solid var(--border);margin-bottom:8px;font-size:0.85rem;line-height:1.5;color:var(--muted);position:relative}
+.review.pos{border-left:2px solid var(--accent3)}
+.review.neg{border-left:2px solid var(--accent2)}
+.review-score{font-family:var(--font-mono);font-size:0.7rem;margin-bottom:6px}
+.review.pos .review-score{color:var(--accent3)}
+.review.neg .review-score{color:var(--accent2)}
+.chart-wrap{position:relative;height:180px;margin-top:8px}
 
-  /* ── Grid ───────────────────────────────────────────────────── */
-  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 20px; }
-  .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 20px; margin-bottom: 20px; }
-  @media(max-width:700px) { .grid-2, .grid-3 { grid-template-columns: 1fr; } }
+/* Stats */
+.stat-box{text-align:center}
+.stat-num{font-family:var(--font-hd);font-size:2.4rem;color:var(--accent);letter-spacing:2px}
+.stat-lbl{font-family:var(--font-mono);font-size:0.65rem;letter-spacing:2px;color:var(--muted)}
 
-  /* ── Panel ──────────────────────────────────────────────────── */
-  .panel {
-    background: var(--bg2);
-    border: 1px solid var(--border);
-    padding: 24px;
-    position: relative;
-    overflow: hidden;
-  }
-  .panel::before {
-    content: '';
-    position: absolute;
-    top: 0; left: 0; right: 0;
-    height: 2px;
-    background: linear-gradient(90deg, var(--accent), transparent);
-  }
-  .panel-label {
-    font-family: var(--font-mono);
-    font-size: 0.68rem;
-    letter-spacing: 2.5px;
-    color: var(--muted);
-    text-transform: uppercase;
-    margin-bottom: 16px;
-  }
+/* Section head */
+.section-head{font-family:var(--font-hd);font-size:1.6rem;letter-spacing:3px;color:#fff;margin:40px 0 16px;display:flex;align-items:center;gap:12px}
+.section-head::after{content:'';flex:1;height:1px;background:var(--border)}
 
-  /* ── Verdict card ───────────────────────────────────────────── */
-  .verdict-card {
-    padding: 32px;
-    border: 1px solid var(--border);
-    position: relative;
-    overflow: hidden;
-    margin-bottom: 20px;
-  }
-  .verdict-card.buy    { border-color: rgba(168,255,62,0.4); background: rgba(168,255,62,0.04); }
-  .verdict-card.wait   { border-color: rgba(0,229,255,0.4);  background: rgba(0,229,255,0.04); }
-  .verdict-card.skip   { border-color: rgba(255,61,113,0.4); background: rgba(255,61,113,0.04); }
-  .verdict-label {
-    font-family: var(--font-hd);
-    font-size: 4rem;
-    letter-spacing: 6px;
-    line-height: 1;
-    margin-bottom: 8px;
-  }
-  .verdict-card.buy  .verdict-label { color: var(--accent3); }
-  .verdict-card.wait .verdict-label { color: var(--accent); }
-  .verdict-card.skip .verdict-label { color: var(--accent2); }
-  .verdict-reason { color: var(--text); font-size: 1.05rem; font-weight: 500; line-height: 1.5; margin-bottom: 12px; }
-  .verdict-tip {
-    font-family: var(--font-mono);
-    font-size: 0.8rem;
-    color: var(--muted);
-    border-left: 2px solid var(--accent);
-    padding-left: 12px;
-  }
-  .verdict-loading {
-    font-family: var(--font-mono);
-    font-size: 0.8rem;
-    color: var(--muted);
-    letter-spacing: 2px;
-    animation: blink 1s ease infinite;
-  }
-  @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.3} }
+/* Description */
+.description{font-size:0.9rem;line-height:1.6;color:var(--muted)}
 
-  /* ── Score gauge ────────────────────────────────────────────── */
-  .gauge-wrap { display: flex; flex-direction: column; align-items: center; gap: 8px; }
-  .gauge { position: relative; width: 120px; height: 60px; }
-  .gauge svg { overflow: visible; }
-  .gauge-number {
-    font-family: var(--font-hd);
-    font-size: 2.2rem;
-    text-anchor: middle;
-    dominant-baseline: middle;
-  }
-  .gauge-label { font-family: var(--font-mono); font-size: 0.65rem; letter-spacing: 2px; color: var(--muted); text-align: center; }
+/* ── TRENDING PAGE ───────────────────────────────────────── */
+#page-trending{padding:48px 0 80px}
+.trending-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:20px;margin-top:24px}
+.trend-card{background:var(--bg2);border:1px solid var(--border);cursor:pointer;transition:border-color 0.2s,transform 0.2s;overflow:hidden}
+.trend-card:hover{border-color:var(--accent);transform:translateY(-3px)}
+.trend-card img{width:100%;height:130px;object-fit:cover;filter:brightness(0.8)}
+.trend-card-body{padding:14px}
+.trend-card-name{font-family:var(--font-hd);font-size:1.2rem;letter-spacing:1.5px;margin-bottom:8px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.trend-card-row{display:flex;justify-content:space-between;align-items:center}
+.sentiment-pill{font-family:var(--font-mono);font-size:0.72rem;padding:3px 8px;border-radius:2px}
+.sentiment-pill.high{background:rgba(168,255,62,0.15);color:var(--accent3);border:1px solid rgba(168,255,62,0.3)}
+.sentiment-pill.mid{background:rgba(0,229,255,0.1);color:var(--accent);border:1px solid rgba(0,229,255,0.3)}
+.sentiment-pill.low{background:rgba(255,61,113,0.1);color:var(--accent2);border:1px solid rgba(255,61,113,0.3)}
+.trend-price{font-family:var(--font-mono);font-size:0.8rem;color:var(--accent3)}
+.trend-discount{font-family:var(--font-mono);font-size:0.7rem;color:var(--accent2);margin-left:6px}
+.trending-loading{text-align:center;padding:60px;font-family:var(--font-mono);font-size:0.8rem;color:var(--muted);letter-spacing:2px}
 
-  /* ── Bar stat ───────────────────────────────────────────────── */
-  .bar-stat { margin-bottom: 14px; }
-  .bar-stat-head { display: flex; justify-content: space-between; margin-bottom: 6px; }
-  .bar-stat-name { font-weight: 600; font-size: 0.85rem; }
-  .bar-stat-val { font-family: var(--font-mono); font-size: 0.8rem; color: var(--muted); }
-  .bar-track { height: 4px; background: var(--border); border-radius: 2px; overflow: hidden; }
-  .bar-fill { height: 100%; border-radius: 2px; transition: width 1s cubic-bezier(.4,0,.2,1); width: 0; }
-  .bar-fill.positive { background: var(--accent3); }
-  .bar-fill.negative { background: var(--accent2); }
-  .bar-fill.neutral  { background: var(--muted); }
+/* ── WATCHLIST PAGE ─────────────────────────────────────── */
+#page-watchlist{padding:48px 0 80px}
+.watchlist-empty{text-align:center;padding:80px 0;font-family:var(--font-mono);font-size:0.85rem;color:var(--muted);letter-spacing:2px}
+.watchlist-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:20px;margin-top:24px}
+.wl-card{background:var(--bg2);border:1px solid var(--border);overflow:hidden;position:relative}
+.wl-card img{width:100%;height:110px;object-fit:cover;filter:brightness(0.7)}
+.wl-card-body{padding:14px}
+.wl-card-name{font-family:var(--font-hd);font-size:1.2rem;letter-spacing:1.5px;margin-bottom:6px}
+.wl-card-meta{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:10px}
+.wl-card-actions{display:flex;gap:8px}
+.wl-btn{flex:1;padding:8px;border:none;font-family:var(--font-ui);font-size:0.8rem;font-weight:600;letter-spacing:1px;cursor:pointer;transition:opacity 0.2s}
+.wl-btn:hover{opacity:0.8}
+.wl-btn.analyse{background:var(--accent);color:#000}
+.wl-btn.remove{background:var(--bg3);color:var(--accent2);border:1px solid rgba(255,61,113,0.3)}
+.wl-remove-icon{position:absolute;top:8px;right:8px;background:rgba(0,0,0,0.6);border:none;color:var(--accent2);font-size:1rem;width:28px;height:28px;cursor:pointer;display:flex;align-items:center;justify-content:center;border-radius:50%}
 
-  /* ── Review quote ───────────────────────────────────────────── */
-  .review {
-    padding: 12px;
-    border: 1px solid var(--border);
-    margin-bottom: 8px;
-    font-size: 0.85rem;
-    line-height: 1.5;
-    color: var(--muted);
-    position: relative;
-  }
-  .review.pos { border-left: 2px solid var(--accent3); }
-  .review.neg { border-left: 2px solid var(--accent2); }
-  .review-score {
-    font-family: var(--font-mono);
-    font-size: 0.7rem;
-    margin-bottom: 6px;
-  }
-  .review.pos .review-score { color: var(--accent3); }
-  .review.neg .review-score { color: var(--accent2); }
+/* Add to watchlist btn */
+.add-wl-btn{background:none;border:1px solid var(--border);color:var(--muted);font-family:var(--font-ui);font-size:0.75rem;font-weight:600;letter-spacing:1px;padding:5px 12px;cursor:pointer;transition:all 0.2s}
+.add-wl-btn:hover,.add-wl-btn.saved{background:rgba(168,255,62,0.1);border-color:var(--accent3);color:var(--accent3)}
 
-  /* ── Chart wrapper ──────────────────────────────────────────── */
-  .chart-wrap { position: relative; height: 180px; margin-top: 8px; }
+/* Share canvas */
+#share-canvas{display:none}
 
-  /* ── Stats row ──────────────────────────────────────────────── */
-  .stat-box { text-align: center; }
-  .stat-num {
-    font-family: var(--font-hd);
-    font-size: 2.4rem;
-    color: var(--accent);
-    letter-spacing: 2px;
-  }
-  .stat-lbl { font-family: var(--font-mono); font-size: 0.65rem; letter-spacing: 2px; color: var(--muted); }
-
-  /* ── Section divider ────────────────────────────────────────── */
-  .section-head {
-    font-family: var(--font-hd);
-    font-size: 1.6rem;
-    letter-spacing: 3px;
-    color: #fff;
-    margin: 40px 0 16px;
-    display: flex;
-    align-items: center;
-    gap: 12px;
-  }
-  .section-head::after {
-    content: '';
-    flex: 1;
-    height: 1px;
-    background: var(--border);
-  }
-
-  /* ── Footer ─────────────────────────────────────────────────── */
-  footer {
-    border-top: 1px solid var(--border);
-    padding: 24px 0;
-    text-align: center;
-    font-family: var(--font-mono);
-    font-size: 0.7rem;
-    color: var(--muted);
-    letter-spacing: 1.5px;
-  }
-  footer span { color: var(--accent); }
-
-  /* ── Misc ───────────────────────────────────────────────────── */
-  .description {
-    font-size: 0.9rem;
-    line-height: 1.6;
-    color: var(--muted);
-  }
-  .error-msg {
-    text-align: center;
-    padding: 40px;
-    color: var(--accent2);
-    font-family: var(--font-mono);
-    font-size: 0.85rem;
-    display: none;
-  }
-  .error-msg.active { display: block; }
+footer{border-top:1px solid var(--border);padding:24px 0;text-align:center;font-family:var(--font-mono);font-size:0.7rem;color:var(--muted);letter-spacing:1.5px}
+footer span{color:var(--accent)}
 </style>
 </head>
 <body>
-
-<!-- ── HEADER ─────────────────────────────────────────────────── -->
 <div class="wrap">
-  <header>
+
+<!-- Header -->
+<header>
+  <div class="logo-row">
     <div class="logo-mark">🎮</div>
     <div>
       <div class="logo-text">GAMECHECK</div>
       <div class="logo-sub">DATA-DRIVEN GAME ANALYSIS</div>
     </div>
-  </header>
-</div>
+  </div>
+  <nav class="nav-tabs">
+    <button class="nav-tab active" onclick="showPage('search')">🔍 SEARCH</button>
+    <button class="nav-tab" onclick="showPage('trending')">🔥 TRENDING</button>
+    <button class="nav-tab" onclick="showPage('watchlist')">📋 WATCHLIST <span id="wl-count"></span></button>
+  </nav>
+</header>
 
-<!-- ── HERO ───────────────────────────────────────────────────── -->
-<div class="wrap">
+<!-- ── SEARCH PAGE ──────────────────────────────────────── -->
+<div id="page-search" class="page active">
   <section class="hero">
     <div class="hero-bg"></div>
     <h1>SHOULD I <span>BUY</span><br>THIS GAME?</h1>
     <p>ML SENTIMENT ANALYSIS · REVIEW TRENDS · AI VERDICT</p>
-
-    <!-- Search -->
     <div class="search-wrap">
-      <input
-        class="search-bar"
-        id="searchInput"
-        type="text"
-        placeholder="Search any game on Steam..."
-        autocomplete="off"
-      />
+      <input class="search-bar" id="searchInput" type="text" placeholder="Search any game on Steam..." autocomplete="off"/>
       <button class="search-btn" id="searchBtn">
-        <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
-          <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
-        </svg>
+        <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
       </button>
       <div id="search-results"></div>
     </div>
   </section>
 
-  <!-- Loading -->
   <div class="loading" id="loading">
     <div class="loading-ring"></div>
-    <div class="loading-text" id="loading-text">CONNECTING TO STEAM DATABASE...</div>
+    <div class="loading-text" id="loading-text">ANALYSING...</div>
   </div>
 
-  <!-- Error -->
-  <div class="error-msg" id="error">⚠ Could not fetch data. Check your API backend is running.</div>
-
-  <!-- ── ANALYSIS ──────────────────────────────────────────────── -->
   <div id="analysis">
-
-    <!-- Game banner -->
     <div class="game-banner">
       <img id="bannerImg" src="" alt=""/>
       <div class="game-banner-content">
@@ -484,29 +237,26 @@
           <span class="tag sale" id="gameDiscount" style="display:none"></span>
           <span class="tag" id="gameRelease">—</span>
           <span class="tag" id="gameDev">—</span>
+          <button class="add-wl-btn" id="addWlBtn" onclick="toggleWatchlist()">+ WATCHLIST</button>
+          <button class="share-btn" onclick="generateShareCard()">⬡ SHARE VERDICT</button>
         </div>
       </div>
     </div>
 
-    <!-- Verdict -->
     <div class="verdict-card" id="verdictCard">
       <div class="panel-label">AI VERDICT</div>
       <div class="verdict-label" id="verdictLabel">ANALYSING...</div>
-      <div class="verdict-reason" id="verdictReason">
-        <span class="verdict-loading">QUERYING AI ENGINE ···</span>
-      </div>
+      <div class="verdict-reason" id="verdictReason"><span class="verdict-loading">QUERYING AI ENGINE ···</span></div>
       <div class="verdict-tip" id="verdictTip" style="display:none"></div>
     </div>
 
-    <!-- Stats row -->
     <div class="grid-3" style="margin-bottom:20px">
       <div class="panel">
         <div class="panel-label">SENTIMENT SCORE</div>
         <div class="gauge-wrap">
-          <svg class="gauge" viewBox="0 0 120 60" width="120" height="60">
+          <svg viewBox="0 0 120 60" width="120" height="60">
             <path d="M10,60 A50,50 0 0,1 110,60" fill="none" stroke="rgba(255,255,255,0.08)" stroke-width="8" stroke-linecap="round"/>
-            <path id="gaugePath" d="M10,60 A50,50 0 0,1 110,60" fill="none" stroke="var(--accent)" stroke-width="8" stroke-linecap="round"
-              stroke-dasharray="157" stroke-dashoffset="157" style="transition:stroke-dashoffset 1.2s ease"/>
+            <path id="gaugePath" d="M10,60 A50,50 0 0,1 110,60" fill="none" stroke="var(--accent)" stroke-width="8" stroke-linecap="round" stroke-dasharray="157" stroke-dashoffset="157" style="transition:stroke-dashoffset 1.2s ease"/>
             <text id="gaugeNum" x="60" y="52" class="gauge-number" fill="white">—</text>
           </svg>
           <div class="gauge-label">OUT OF 100</div>
@@ -514,8 +264,9 @@
       </div>
       <div class="panel">
         <div class="panel-label">STEAM STATS</div>
-        <div id="steamStats" style="margin-top:8px">
-          <div class="stat-box"><div class="stat-num" id="statRec">—</div><div class="stat-lbl">RECOMMENDATIONS</div></div>
+        <div class="stat-box" style="margin-top:8px">
+          <div class="stat-num" id="statRec">—</div>
+          <div class="stat-lbl">RECOMMENDATIONS</div>
         </div>
       </div>
       <div class="panel">
@@ -527,37 +278,31 @@
       </div>
     </div>
 
-    <!-- Sentiment breakdown + chart -->
     <div class="grid-2">
       <div class="panel">
         <div class="panel-label">REVIEW BREAKDOWN</div>
-        <div id="sentimentBars">
-          <div class="bar-stat">
-            <div class="bar-stat-head"><span class="bar-stat-name">👍 Positive</span><span class="bar-stat-val" id="posVal">—</span></div>
-            <div class="bar-track"><div class="bar-fill positive" id="posBar"></div></div>
-          </div>
-          <div class="bar-stat">
-            <div class="bar-stat-head"><span class="bar-stat-name">👎 Negative</span><span class="bar-stat-val" id="negVal">—</span></div>
-            <div class="bar-track"><div class="bar-fill negative" id="negBar"></div></div>
-          </div>
-          <div class="bar-stat">
-            <div class="bar-stat-head"><span class="bar-stat-name">😐 Neutral</span><span class="bar-stat-val" id="neuVal">—</span></div>
-            <div class="bar-track"><div class="bar-fill neutral" id="neuBar"></div></div>
-          </div>
-          <div style="margin-top:16px; font-family:var(--font-mono); font-size:0.72rem; color:var(--muted)">
-            Based on <span id="reviewCount" style="color:var(--accent)">—</span> recent reviews analysed
-          </div>
+        <div class="bar-stat">
+          <div class="bar-stat-head"><span class="bar-stat-name">👍 Positive</span><span class="bar-stat-val" id="posVal">—</span></div>
+          <div class="bar-track"><div class="bar-fill positive" id="posBar"></div></div>
+        </div>
+        <div class="bar-stat">
+          <div class="bar-stat-head"><span class="bar-stat-name">👎 Negative</span><span class="bar-stat-val" id="negVal">—</span></div>
+          <div class="bar-track"><div class="bar-fill negative" id="negBar"></div></div>
+        </div>
+        <div class="bar-stat">
+          <div class="bar-stat-head"><span class="bar-stat-name">😐 Neutral</span><span class="bar-stat-val" id="neuVal">—</span></div>
+          <div class="bar-track"><div class="bar-fill neutral" id="neuBar"></div></div>
+        </div>
+        <div style="margin-top:16px;font-family:var(--font-mono);font-size:0.72rem;color:var(--muted)">
+          Based on <span id="reviewCount" style="color:var(--accent)">—</span> recent reviews
         </div>
       </div>
       <div class="panel">
         <div class="panel-label">SENTIMENT TREND (8 MONTHS)</div>
-        <div class="chart-wrap">
-          <canvas id="trendChart"></canvas>
-        </div>
+        <div class="chart-wrap"><canvas id="trendChart"></canvas></div>
       </div>
     </div>
 
-    <!-- Reviews -->
     <div class="section-head">WHAT PLAYERS SAY</div>
     <div class="grid-2">
       <div>
@@ -570,108 +315,118 @@
       </div>
     </div>
 
-    <!-- Description -->
     <div class="section-head">ABOUT</div>
     <div class="panel">
       <p class="description" id="gameDesc">—</p>
-      <div style="margin-top:16px; display:flex; gap:8px; flex-wrap:wrap" id="gameTags"></div>
+      <div style="margin-top:16px;display:flex;gap:8px;flex-wrap:wrap" id="gameTags"></div>
     </div>
+  </div>
+</div>
 
-  </div><!-- /analysis -->
+<!-- ── TRENDING PAGE ────────────────────────────────────── -->
+<div id="page-trending" class="page">
+  <div class="section-head" style="margin-top:40px">🔥 STEAM TOP SELLERS</div>
+  <p style="font-family:var(--font-mono);font-size:0.75rem;color:var(--muted);letter-spacing:1px">Live sentiment scores from recent reviews. Click any game to analyse.</p>
+  <div id="trending-container">
+    <div class="trending-loading">LOADING TRENDING GAMES ···</div>
+  </div>
+</div>
 
-  <!-- Footer -->
-  <footer>
-    <span>GAMECHECK</span> · DATA FROM STEAM API · SENTIMENT BY VADER · VERDICT BY <span>CLAUDE AI</span>
-  </footer>
-</div><!-- /wrap -->
+<!-- ── WATCHLIST PAGE ───────────────────────────────────── -->
+<div id="page-watchlist" class="page">
+  <div class="section-head" style="margin-top:40px">📋 MY WATCHLIST</div>
+  <p style="font-family:var(--font-mono);font-size:0.75rem;color:var(--muted);letter-spacing:1px">Games you saved. Click Analyse to get a fresh verdict.</p>
+  <div id="watchlist-container"></div>
+</div>
+
+<canvas id="share-canvas" width="800" height="400"></canvas>
+
+<footer><span>GAMECHECK</span> · STEAM API · VADER SENTIMENT · <span>GROQ AI</span></footer>
+</div>
 
 <script>
-// ── CONFIG ─────────────────────────────────────────────────────────────────
-// Change this to your deployed backend URL when live
 const API = 'https://game-production-ec87.up.railway.app';
+let trendChart = null;
+let currentGame = null; // stores current game data for watchlist/share
 
-// ── Elements ───────────────────────────────────────────────────────────────
-const input      = document.getElementById('searchInput');
-const searchBtn  = document.getElementById('searchBtn');
-const resultsEl  = document.getElementById('search-results');
-const loadingEl  = document.getElementById('loading');
-const loadingTxt = document.getElementById('loading-text');
-const analysisEl = document.getElementById('analysis');
-const errorEl    = document.getElementById('error');
-let trendChart   = null;
+// ── Page nav ───────────────────────────────────────────────────────────────
+function showPage(name) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+  document.getElementById('page-' + name).classList.add('active');
+  document.querySelectorAll('.nav-tab')[['search','trending','watchlist'].indexOf(name)].classList.add('active');
+  if (name === 'trending' && !trendingLoaded) loadTrending();
+  if (name === 'watchlist') renderWatchlist();
+}
 
-// ── Search debounce ────────────────────────────────────────────────────────
+// ── Search ─────────────────────────────────────────────────────────────────
+const input = document.getElementById('searchInput');
+const searchBtn = document.getElementById('searchBtn');
+const resultsEl = document.getElementById('search-results');
 let debounce;
+
 input.addEventListener('input', () => {
   clearTimeout(debounce);
   const q = input.value.trim();
   if (q.length < 2) { resultsEl.style.display = 'none'; return; }
   debounce = setTimeout(() => fetchSearch(q), 350);
 });
-input.addEventListener('keydown', e => { if (e.key === 'Enter') { clearTimeout(debounce); fetchSearch(input.value.trim()); } });
+input.addEventListener('keydown', e => { if (e.key === 'Enter') fetchSearch(input.value.trim()); });
 searchBtn.addEventListener('click', () => fetchSearch(input.value.trim()));
 document.addEventListener('click', e => { if (!e.target.closest('.search-wrap')) resultsEl.style.display = 'none'; });
 
 async function fetchSearch(q) {
   if (!q) return;
   try {
-    const res = await fetch(`${API}/search?game=${encodeURIComponent(q)}`);
-    const data = await res.json();
-    renderResults(data);
+    const res = await fetch(API + '/search?game=' + encodeURIComponent(q));
+    renderResults(await res.json());
   } catch { renderResults([]); }
 }
 
 function renderResults(items) {
   if (!items.length) { resultsEl.style.display = 'none'; return; }
-  resultsEl.innerHTML = items.map(g => `
-    <div class="result-item" onclick="analyzeGame(${g.appid}, '${g.name.replace(/'/g,"\\'")}')">
-      <img src="${g.tiny_image}" onerror="this.style.display='none'" alt=""/>
-      <span class="result-name">${g.name}</span>
-      <span class="result-price">${g.price}</span>
-    </div>`).join('');
+  resultsEl.innerHTML = items.map(g =>
+    '<div class="result-item" onclick="analyzeGame(' + g.appid + ',\'' + g.name.replace(/'/g,"\\'") + '\')">' +
+    '<img src="' + g.tiny_image + '" onerror="this.style.display=\'none\'" alt=""/>' +
+    '<span class="result-name">' + g.name + '</span>' +
+    '<span class="result-price">' + g.price + '</span></div>'
+  ).join('');
   resultsEl.style.display = 'block';
 }
 
 // ── Analyse ────────────────────────────────────────────────────────────────
 async function analyzeGame(appid, name) {
   resultsEl.style.display = 'none';
-  analysisEl.style.display = 'none';
-  analysisEl.classList.remove('active');
-  errorEl.classList.remove('active');
-  loadingEl.classList.add('active');
+  document.getElementById('analysis').style.display = 'none';
+  document.getElementById('loading').classList.add('active');
+  document.getElementById('verdictTip').style.display = 'none';
+  showPage('search');
 
   try {
-    // Step 1: game details
-    setLoadingText('FETCHING GAME DATA...');
+    document.getElementById('loading-text').textContent = 'FETCHING GAME DATA...';
     const [gameRes, reviewRes] = await Promise.all([
-      fetch(`${API}/game?appid=${appid}`).then(r => r.json()),
-      fetch(`${API}/reviews?appid=${appid}`).then(r => r.json()),
+      fetch(API + '/game?appid=' + appid).then(r => r.json()),
+      fetch(API + '/reviews?appid=' + appid).then(r => r.json()),
     ]);
 
-    // Render static data first
+    currentGame = { appid, name, ...gameRes, sentiment: reviewRes.score };
     renderGame(gameRes);
     renderReviews(reviewRes);
+    updateWatchlistBtn();
 
-    // Show panel
-    loadingEl.classList.remove('active');
-    analysisEl.style.display = 'block';
-    setTimeout(() => analysisEl.classList.add('active'), 10);
+    document.getElementById('loading').classList.remove('active');
+    document.getElementById('analysis').style.display = 'block';
+    setTimeout(() => document.getElementById('analysis').classList.add('active'), 10);
     animateBars(reviewRes);
     animateGauge(reviewRes.score);
     renderChart(reviewRes.monthly_trend);
 
-    // Step 2: verdict (can take a moment)
-    setLoadingText('QUERYING AI ENGINE...');
     fetchVerdict(gameRes, reviewRes);
-
   } catch(err) {
-    loadingEl.classList.remove('active');
-    errorEl.classList.add('active');
+    document.getElementById('loading').classList.remove('active');
     console.error(err);
   }
 }
-
-function setLoadingText(t) { loadingTxt.textContent = t; }
 
 function renderGame(g) {
   document.getElementById('bannerImg').src = g.header_image;
@@ -682,13 +437,10 @@ function renderGame(g) {
   document.getElementById('gameDesc').textContent = stripHTML(g.description || '—');
   document.getElementById('statRec').textContent = fmtNum(g.recommendations);
   document.getElementById('statMeta').textContent = g.metacritic || 'N/A';
-
   const disc = document.getElementById('gameDiscount');
-  if (g.discount > 0) { disc.textContent = `-${g.discount}% SALE`; disc.style.display = ''; }
+  if (g.discount > 0) { disc.textContent = '-' + g.discount + '% SALE'; disc.style.display = ''; }
   else disc.style.display = 'none';
-
-  const tagsEl = document.getElementById('gameTags');
-  tagsEl.innerHTML = (g.genres || []).map(t => `<span class="tag">${t}</span>`).join('');
+  document.getElementById('gameTags').innerHTML = (g.genres || []).map(t => '<span class="tag">' + t + '</span>').join('');
 }
 
 function renderReviews(r) {
@@ -696,19 +448,12 @@ function renderReviews(r) {
   document.getElementById('negVal').textContent = r.negative_pct + '%';
   document.getElementById('neuVal').textContent = r.neutral_pct + '%';
   document.getElementById('reviewCount').textContent = fmtNum(r.total);
-
-  const posEl = document.getElementById('posReviews');
-  const negEl = document.getElementById('negReviews');
-  posEl.innerHTML = (r.top_positive || []).map(rv => `
-    <div class="review pos">
-      <div class="review-score">SCORE: ${rv.score}/100</div>
-      ${truncate(rv.text, 200)}
-    </div>`).join('') || '<div class="review pos" style="color:var(--muted)">No positive reviews found.</div>';
-  negEl.innerHTML = (r.top_negative || []).map(rv => `
-    <div class="review neg">
-      <div class="review-score">SCORE: ${rv.score}/100</div>
-      ${truncate(rv.text, 200)}
-    </div>`).join('') || '<div class="review neg" style="color:var(--muted)">No negative reviews found.</div>';
+  document.getElementById('posReviews').innerHTML = (r.top_positive || []).map(rv =>
+    '<div class="review pos"><div class="review-score">SCORE: ' + rv.score + '/100</div>' + truncate(rv.text, 200) + '</div>'
+  ).join('') || '<div class="review pos" style="color:var(--muted)">No positive reviews found.</div>';
+  document.getElementById('negReviews').innerHTML = (r.top_negative || []).map(rv =>
+    '<div class="review neg"><div class="review-score">SCORE: ' + rv.score + '/100</div>' + truncate(rv.text, 200) + '</div>'
+  ).join('') || '<div class="review neg" style="color:var(--muted)">No negative reviews found.</div>';
 }
 
 function animateBars(r) {
@@ -721,14 +466,11 @@ function animateBars(r) {
 
 function animateGauge(score) {
   const path = document.getElementById('gaugePath');
-  const num  = document.getElementById('gaugeNum');
-  const total = 157;
-  const offset = total - (score / 100) * total;
+  const num = document.getElementById('gaugeNum');
+  const offset = 157 - (score / 100) * 157;
   num.textContent = score;
-  // color based on score
   const color = score >= 70 ? 'var(--accent3)' : score >= 45 ? 'var(--accent)' : 'var(--accent2)';
-  path.style.stroke = color;
-  num.style.fill = color;
+  path.style.stroke = color; num.style.fill = color;
   setTimeout(() => { path.style.strokeDashoffset = offset; }, 200);
 }
 
@@ -740,73 +482,211 @@ function renderChart(trend) {
     type: 'line',
     data: {
       labels: trend.map(t => t.month),
-      datasets: [{
-        data: trend.map(t => t.score),
-        borderColor: '#00e5ff',
-        backgroundColor: 'rgba(0,229,255,0.06)',
-        fill: true,
-        tension: 0.4,
-        pointBackgroundColor: '#00e5ff',
-        pointRadius: 4,
-        pointHoverRadius: 6,
-      }]
+      datasets: [{ data: trend.map(t => t.score), borderColor: '#00e5ff', backgroundColor: 'rgba(0,229,255,0.06)', fill: true, tension: 0.4, pointBackgroundColor: '#00e5ff', pointRadius: 4 }]
     },
-    options: {
-      responsive: true, maintainAspectRatio: false,
-      plugins: { legend: { display: false } },
-      scales: {
-        x: { ticks: { color: '#64748b', font: { family: 'DM Mono', size: 10 } }, grid: { color: 'rgba(255,255,255,0.04)' } },
-        y: {
-          min: 0, max: 100,
-          ticks: { color: '#64748b', font: { family: 'DM Mono', size: 10 }, stepSize: 25 },
-          grid: { color: 'rgba(255,255,255,0.04)' }
-        }
-      },
-      animation: { duration: 1000, easing: 'easeInOutQuart' }
-    }
+    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { ticks: { color: '#64748b', font: { family: 'DM Mono', size: 10 } }, grid: { color: 'rgba(255,255,255,0.04)' } }, y: { min: 0, max: 100, ticks: { color: '#64748b', font: { family: 'DM Mono', size: 10 }, stepSize: 25 }, grid: { color: 'rgba(255,255,255,0.04)' } } } }
   });
 }
 
 async function fetchVerdict(g, r) {
+  const card = document.getElementById('verdictCard');
+  const label = document.getElementById('verdictLabel');
+  const reason = document.getElementById('verdictReason');
+  const tip = document.getElementById('verdictTip');
+
+  label.textContent = 'ANALYSING...';
+  reason.innerHTML = '<span class="verdict-loading">QUERYING AI ENGINE ···</span>';
+  card.className = 'verdict-card';
+
   try {
     const params = new URLSearchParams({
-      name: g.name,
-      price: g.price || 'Free',
-      score: r.score,
-      positive_pct: r.positive_pct,
-      negative_pct: r.negative_pct,
-      discount: g.discount || 0,
-      recommendations: g.recommendations || 0,
-      metacritic: g.metacritic || 'N/A',
-      genres: (g.genres || []).join(', ')
+      name: g.name, price: g.price || 'Free', score: r.score,
+      positive_pct: r.positive_pct, negative_pct: r.negative_pct,
+      discount: g.discount || 0, recommendations: g.recommendations || 0,
+      metacritic: g.metacritic || 'N/A', genres: (g.genres || []).join(', ')
     });
-    const v = await fetch(`${API}/verdict?${params}`).then(r => r.json());
-    renderVerdict(v);
+    const v = await fetch(API + '/verdict?' + params).then(r => r.json());
+
+    label.textContent = v.label || 'UNKNOWN';
+    reason.textContent = v.reason || '';
+    if (v.tip) { tip.textContent = v.tip; tip.style.display = 'block'; }
+    card.className = 'verdict-card ' + (v.label === 'BUY NOW' ? 'buy' : v.label === 'WAIT FOR SALE' ? 'wait' : 'skip');
+
+    // Update currentGame verdict for share card
+    if (currentGame) { currentGame.verdict = v.label; currentGame.score = r.score; }
   } catch {
-    renderVerdict({ label: 'UNKNOWN', reason: 'Could not reach AI engine.', tip: '' });
+    label.textContent = 'UNKNOWN';
+    reason.textContent = 'Could not reach AI engine.';
   }
 }
 
-function renderVerdict(v) {
-  const card  = document.getElementById('verdictCard');
-  const label = document.getElementById('verdictLabel');
-  const reason= document.getElementById('verdictReason');
-  const tip   = document.getElementById('verdictTip');
+// ── WATCHLIST ─────────────────────────────────────────────────────────────
+function getWatchlist() { try { return JSON.parse(localStorage.getItem('gc_watchlist') || '[]'); } catch { return []; } }
+function saveWatchlist(wl) { localStorage.setItem('gc_watchlist', JSON.stringify(wl)); updateWlCount(); }
 
-  label.textContent = v.label || 'UNKNOWN';
-  reason.textContent = v.reason || '';
-  if (v.tip) { tip.textContent = v.tip; tip.style.display = 'block'; }
+function updateWlCount() {
+  const wl = getWatchlist();
+  document.getElementById('wl-count').textContent = wl.length ? '(' + wl.length + ')' : '';
+}
 
-  card.className = 'verdict-card';
-  if (v.label === 'BUY NOW')       card.classList.add('buy');
-  else if (v.label === 'WAIT FOR SALE') card.classList.add('wait');
-  else                              card.classList.add('skip');
+function updateWatchlistBtn() {
+  if (!currentGame) return;
+  const wl = getWatchlist();
+  const btn = document.getElementById('addWlBtn');
+  const saved = wl.some(g => g.appid === currentGame.appid);
+  btn.textContent = saved ? '✓ SAVED' : '+ WATCHLIST';
+  btn.className = 'add-wl-btn' + (saved ? ' saved' : '');
+}
+
+function toggleWatchlist() {
+  if (!currentGame) return;
+  let wl = getWatchlist();
+  const idx = wl.findIndex(g => g.appid === currentGame.appid);
+  if (idx >= 0) wl.splice(idx, 1);
+  else wl.unshift({ appid: currentGame.appid, name: currentGame.name, header_image: currentGame.header_image, price: currentGame.price, discount: currentGame.discount, sentiment: currentGame.sentiment });
+  saveWatchlist(wl);
+  updateWatchlistBtn();
+}
+
+function renderWatchlist() {
+  const wl = getWatchlist();
+  const el = document.getElementById('watchlist-container');
+  if (!wl.length) {
+    el.innerHTML = '<div class="watchlist-empty">NO GAMES SAVED YET<br><br>Search for a game and click + WATCHLIST</div>';
+    return;
+  }
+  el.innerHTML = '<div class="watchlist-grid">' + wl.map(g => {
+    const sc = g.sentiment || 50;
+    const cls = sc >= 70 ? 'high' : sc >= 45 ? 'mid' : 'low';
+    return '<div class="wl-card">' +
+      '<img src="' + g.header_image + '" alt=""/>' +
+      '<button class="wl-remove-icon" onclick="removeFromWatchlist(' + g.appid + ')">✕</button>' +
+      '<div class="wl-card-body">' +
+      '<div class="wl-card-name">' + g.name + '</div>' +
+      '<div class="wl-card-meta">' +
+      '<span class="tag price">' + (g.price || 'Free') + '</span>' +
+      (g.discount > 0 ? '<span class="tag sale">-' + g.discount + '%</span>' : '') +
+      '<span class="sentiment-pill ' + cls + '">' + sc + '/100</span>' +
+      '</div>' +
+      '<div class="wl-card-actions">' +
+      '<button class="wl-btn analyse" onclick="analyzeGame(' + g.appid + ',\'' + g.name.replace(/'/g,"\\'") + '\');showPage(\'search\')">ANALYSE</button>' +
+      '<button class="wl-btn remove" onclick="removeFromWatchlist(' + g.appid + ')">REMOVE</button>' +
+      '</div></div></div>';
+  }).join('') + '</div>';
+}
+
+function removeFromWatchlist(appid) {
+  let wl = getWatchlist();
+  wl = wl.filter(g => g.appid !== appid);
+  saveWatchlist(wl);
+  renderWatchlist();
+  updateWatchlistBtn();
+}
+
+// ── TRENDING ──────────────────────────────────────────────────────────────
+let trendingLoaded = false;
+async function loadTrending() {
+  try {
+    const games = await fetch(API + '/trending').then(r => r.json());
+    trendingLoaded = true;
+    const el = document.getElementById('trending-container');
+    el.innerHTML = '<div class="trending-grid">' + games.map(g => {
+      const cls = g.sentiment >= 70 ? 'high' : g.sentiment >= 45 ? 'mid' : 'low';
+      return '<div class="trend-card" onclick="analyzeGame(' + g.appid + ',\'' + g.name.replace(/'/g,"\\'") + '\');showPage(\'search\')">' +
+        '<img src="' + g.header_image + '" onerror="this.src=\'\'" alt=""/>' +
+        '<div class="trend-card-body">' +
+        '<div class="trend-card-name">' + g.name + '</div>' +
+        '<div class="trend-card-row">' +
+        '<span class="sentiment-pill ' + cls + '">' + g.sentiment + '/100</span>' +
+        '<span><span class="trend-price">' + g.price + '</span>' +
+        (g.discount > 0 ? '<span class="trend-discount">-' + g.discount + '%</span>' : '') + '</span>' +
+        '</div></div></div>';
+    }).join('') + '</div>';
+  } catch { document.getElementById('trending-container').innerHTML = '<div class="trending-loading">FAILED TO LOAD — CHECK BACKEND</div>'; }
+}
+
+// ── SHARE CARD ────────────────────────────────────────────────────────────
+function generateShareCard() {
+  if (!currentGame) return;
+  const canvas = document.getElementById('share-canvas');
+  canvas.style.display = 'none';
+  const ctx = canvas.getContext('2d');
+  const W = 800, H = 400;
+
+  const img = new Image();
+  img.crossOrigin = 'anonymous';
+  img.onload = () => {
+    // Background
+    ctx.drawImage(img, 0, 0, W, H);
+    ctx.fillStyle = 'rgba(8,11,16,0.82)';
+    ctx.fillRect(0, 0, W, H);
+
+    // Accent bar
+    ctx.fillStyle = '#00e5ff';
+    ctx.fillRect(0, 0, 4, H);
+
+    // Game name
+    ctx.fillStyle = '#ffffff';
+    ctx.font = 'bold 48px Bebas Neue, sans-serif';
+    ctx.letterSpacing = '3px';
+    ctx.fillText((currentGame.name || '').toUpperCase(), 40, 80);
+
+    // Sentiment score
+    const sc = currentGame.score || currentGame.sentiment || 0;
+    ctx.font = '16px DM Mono, monospace';
+    ctx.fillStyle = '#64748b';
+    ctx.fillText('SENTIMENT SCORE', 40, 130);
+    ctx.font = 'bold 72px Bebas Neue, sans-serif';
+    ctx.fillStyle = sc >= 70 ? '#a8ff3e' : sc >= 45 ? '#00e5ff' : '#ff3d71';
+    ctx.fillText(sc + '/100', 40, 210);
+
+    // Verdict
+    const v = currentGame.verdict || '—';
+    ctx.font = '14px DM Mono, monospace';
+    ctx.fillStyle = '#64748b';
+    ctx.fillText('AI VERDICT', 40, 260);
+    ctx.font = 'bold 56px Bebas Neue, sans-serif';
+    ctx.fillStyle = v === 'BUY NOW' ? '#a8ff3e' : v === 'WAIT FOR SALE' ? '#00e5ff' : '#ff3d71';
+    ctx.fillText(v, 40, 320);
+
+    // Watermark
+    ctx.font = '13px DM Mono, monospace';
+    ctx.fillStyle = 'rgba(100,116,139,0.7)';
+    ctx.fillText('GAMECHECK · DATA-DRIVEN GAME ANALYSIS', 40, 375);
+
+    // Price badge
+    ctx.fillStyle = 'rgba(168,255,62,0.15)';
+    ctx.strokeStyle = 'rgba(168,255,62,0.4)';
+    ctx.lineWidth = 1;
+    ctx.fillRect(W - 220, H - 80, 180, 44);
+    ctx.strokeRect(W - 220, H - 80, 180, 44);
+    ctx.font = 'bold 22px Rajdhani, sans-serif';
+    ctx.fillStyle = '#a8ff3e';
+    ctx.textAlign = 'center';
+    ctx.fillText(currentGame.price || 'Free', W - 130, H - 50);
+    ctx.textAlign = 'left';
+
+    // Download
+    const link = document.createElement('a');
+    link.download = (currentGame.name || 'game') + '-verdict.png';
+    link.href = canvas.toDataURL('image/png');
+    link.click();
+  };
+  img.onerror = () => {
+    ctx.fillStyle = '#080b10';
+    ctx.fillRect(0, 0, W, H);
+    img.onload();
+  };
+  img.src = currentGame.header_image || '';
+
 }
 
 // ── Helpers ────────────────────────────────────────────────────────────────
 function stripHTML(s) { const d = document.createElement('div'); d.innerHTML = s; return d.textContent; }
 function truncate(s, n) { return s.length > n ? s.slice(0, n) + '…' : s; }
-function fmtNum(n) { if (!n) return '—'; if (n >= 1000000) return (n/1000000).toFixed(1)+'M'; if (n >= 1000) return (n/1000).toFixed(1)+'K'; return n; }
+function fmtNum(n) { if (!n) return '—'; if (n >= 1e6) return (n/1e6).toFixed(1)+'M'; if (n >= 1e3) return (n/1e3).toFixed(1)+'K'; return n; }
+
+updateWlCount();
 </script>
 </body>
 </html>
